@@ -1,0 +1,617 @@
+---
+title: "Statistics using R"
+output: html_document
+---
+#### Bahman Moraffah
+Arizona State University
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Basic Notations
+
+#### Normal Distribution
+* rnorm(number of smaples needed, mu, sigma)--> generates samples from normal distrbution ( it is $\sigma$ and not $\sigma^2$) 
+* dnorm(point x,mean , sigma ) --> gives the density--> computing density at point x 
+* pnorm gives the distribution function,
+* qnorm gives the quantile function
+* Commands in R take standard deviation and not variance.
+
+#### bionomial Distribution
+rbinom(number of samples needed, size of the sampel space, probability )
+
+#### Poisson Distribution
+* rpois(number of samples needed, mean lambda)
+* dpois(point, lambda, log = FALSE)
+
+#### Beta Distribution
+* dbeta(point, shape parameter, shape parameter, non centrality parameter, log = FALSE) --> calculating the density of Beta at the point
+* rbeta( number of required observation, shape parameter, shape parameter, ncp = 0)
+* Note that Beta(1,1) generates uniform distribution
+
+#### Gamma Distribution
+* dgamma(point, shape parameter, rate = 1, scale = 1/shape, log = FALSE) --> calculating the density of Beta at the point
+* rgamma(number of observation , shape parameter, rate = 1, scale = 1/shape)--> shape and rate mus tbe strickly positive
+* pgamma (thereshold p, $\alpha$, $\beta$) --> gives us probability that gamma is less tahn threshold p.
+* qgamma(c(a,b), $\alpha$, $\beta$) --> produces confidence interval $(b-a)\%$
+
+#### Density Plotting
+* using density gives us the kernel density estimator--> density(data from which we estimate (vector), bw = bandwidth, adjust = 1, kernel = string usually using one of the "gaussain", ...)
+* density() gives us a smooth kernel density estimator of the data
+
+##### Defenition 
+* Mean of $Y$ is given by 
+\begin{equation}
+\mathbb{E}(Y) = \int_y yd\mathbb{P}(y)
+\end{equation}
+* Mode of $Y$ is the most probable value of $Y$
+* Median of $Y$ is the value of $Y$ in the middle of the distribution 
+
+Note that in general these quantitites are not the same. If $X$ is drawn from a normal distribution all these quantities match. 
+
+* A measure of spread is quantiles. $\alpha$-quantile is the value $y_{\alpha}$ such that $F(y_{\alpha}) = Pr(Y\leq y_{\alpha}) = \alpha$. In other words, $y_{\alpha} = F^{-1}(\alpha)$.
+* gamma($x$) produces the value of gamma function at point $x$.
+* Note that 
+\begin{equation}
+\int_{0}^1 \theta^{a-1}(1-\theta)^{b-1}d\theta = \frac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}.
+\end{equation}
+* quantile(samples, c(a,b))--> give the ratio of the samples (vector) in interval (a,b)--> produces $(b-a)\%$ confidence interval
+* In R we can find the compariosn by using monte carlo mean of the compariosn as $$mean(\theta_1>\theta_2) = \frac{1}{S}\sum I(\theta^{(s)}_1 >\theta^{(s)}_2)$$
+* **Predictive Distribution of $Y_\text{new}:$** a predictive is a distribution such that
+
+     * It is conditioned on all known quantities
+     * Unknown quantities are integrated out
+* Integrating out the parameters but its not conditioned on observed data is called <em> prior predictive</em>.
+* <em> Posterior Predictive </em> is defined as 
+\begin{equation}
+p(y_{\text{new}}|y_1,\dots,y_n) = \int_{\theta}p(y_{\text{new}}|, \theta, y_1,\dots,y_n) d\theta = \int_{\theta}p(y_{\text{new}}|\theta) p(\theta|y_1,\dots, y_n)d\theta
+\end{equation}
+* Sampling directly from the posterior predictive is hard so we can use MC method; $p(y_{\text{new}}|y_1,\dots,y_n) = \mathbb{E}(p(y_{\text{new}}|\theta))$; therefore,
+      * Sample $\{\theta_1, \dots, \theta_S\}$ from $p(\theta|y_1,\dots, y_n)$
+      * $p(y_{\text{new}}|y_1,\dots,y_n) = \frac{1}{S}\sum p(y_{\text{new}}|\theta_s)$
+      * **Generally we do**
+      
+      \begin{equation}
+      \theta_1 \sim p(\theta|y_1,\dots, y_n) -> \text{Sample} y_1 \sim p(y_{\text{new}}|\theta_1)\\
+      \theta_2 \sim p(\theta|y_1,\dots, y_n) -> \text{Sample} y_2 \sim p(y_{\text{new}}|\theta_2)\\
+      ...\\
+      \theta_S \sim p(\theta|y_1,\dots, y_n) -> \text{Sample} y_S \sim p(y_{\text{new}}|\theta_S)
+      \end{equation}
+      and now we have set of samples $\{(\theta_1,y_1), \dots, (\theta_S,y_S)\}$ from the joint posterior distribution, and samples $\{y_1,\dots,y_S\}$ are samples from the marginal posterior distribution which is posterior predictive distribution. 
+      
+#### Guassian conjugate prior for known variance
+
+* Assume $y_i \sim \mathcal{N}(\mu,\sigma^2)$ for $i = 1,\dots, n$ and given(for known)$\sigma^2$, $\mu|\sigma^2 \sim \mathcal{N}(\mu_0, \tau^2_0)$. then 
+\begin{equation}
+\mu|\sigma^2, y_1,\dots, y_n \sim \mathcal{N}(\mu_n,\tau^2_n)
+\end{equation}
+where $\mu_n = b/a$ and $\tau^2_n = 1/a$ for 
+
+\begin{equation}
+a  = \frac{1}{\tau^2_0}+\frac{n}{\sigma^2}\\
+b = \frac{\mu_0}{\tau^2_0} + \frac{\sum y_i}{\sigma^2}
+\end{equation}
+
+* **Predictive distribution:** Since $Y_\text{new} | \mu, \sigma^2\sim \mathcal{N}(\mu, \sigma^2)$ is equivalent to $Y_\text{new} = \mu + \epsilon$ where $\epsilon \sim \mathcal{N}(0,\sigma^2)$ then,
+
+\begin{equation}
+Y_\text{new} | y_1, \dots, y_n \sim \mathcal{N}(\mu_n, \tau^2_n+\sigma^2)
+\end{equation}
+
+#### Guassian conjugate prior (General)
+* Becasuse of the Bayes' rule we can write $$p(\mu,\sigma^2|y_1,\dots,y_n) = p(\mu|\sigma^2)p(\sigma^2) p(y_1,\dots, y_n| \mu, \sigma^2).$$
+We know that the conjugate prior for mean given the variance is a normal distribution. Assume that $$\mu|\sigma^2 \sim \mathcal{N}(\mu_0, \sigma^2/\kappa_0)$$
+meaning that $\tau^2_0 = \sigma^2/\kappa_0$ where $\mu_0$ and $\kappa_0$ can be interpreted as the mean and the sample size from a set of prior observations. 
+* For $\sigma^2$ the family of distribution should have a positive support so that Gamma distribution is appropriate. However, this family is not the conjugate prior for normal variance. Good news is Gamma family is the conjugate prior for percision $1/\sigma^2$, and thus $\sigma^2$ has an Inverse-Gamma distribution, meaning
+$$1/\sigma^2 \sim \Gamma(\nu_0/2, \sigma^2_0\nu_0/2).$$
+where $nu_0$ and $\sigma^2_0$ are interpreted as sample size of prior observations and sample variance, respectively. Hence, the prior has distribution of 
+$$(\mu, \sigma^2) \sim NIG(\mu_0, \kappa_0, \nu_0, \sigma^2_0)$$
+* **Posterior Distribution:** Given the data and Bayes' rule we have
+
+\begin{equation}
+\mu|y_1,\dots,y_n, \sigma^2 \sim \mathcal{N}(\mu_n, \tau^2_n = \sigma^2/\kappa_n)
+\end{equation}
+where $\kappa_n = \kappa_0 + n$ and $\mu_n = \frac{\kappa_0\mu_0 + n\bar{y}}{\kappa_n}$.
+
+* Note that $\frac{\sqrt{n}(\bar{X}-\mu)}{\sigma}\to \mathcal{N}(0,1)$; however, $\frac{\sqrt{n}(\bar{X}-\mu)}{S}\to t_{n-1}$, if data is distributed from a normal distribution.
+
+## Gibbs Sampler
+
+We provide a Gibbs sampler for Guassian case. 
+Assume $y_1, \dots, y_n \sim \mathcal{N}(\mu, \sigma^2)$. We place the following priors on the parameters
+\begin{equation}
+\sigma^2 \sim \text{IG}(\nu_0/2, \sigma^2_0\nu_0/2)\\ 
+\mu | \sigma^2 \sim \mathcal{N}(\mu_0, \sigma^2/\kappa_0)
+\end{equation}
+for conjugate prior. If we assume "semi-conjugate", then 
+\begin{equation}
+\sigma^2 \sim \text{IG}(\nu_0/2, \sigma^2_0\nu_0/2)\\ 
+\mu \sim \mathcal{N}(\mu_0, \tau^2_0)
+\end{equation}
+then, the postrior distribution for the semi-conjugate is the follwoing:
+\begin{equation}
+\sigma^2|\mu, y_1, \dots, y_n \sim \text{IG}(\nu_n/2,\sigma^2_n\nu_n/2 )\\
+\mu_n | \sigma^2, y_1, \dots, y_n \sim \mathcal{N}(\mu_n, \tau^2_n)
+\end{equation}
+where
+\begin{equation}
+\mu_n = \frac{\mu_0/\tau^2_0 + n\bar{y}/\sigma^2}{1/\tau^2_0 + n/\sigma^2}, \hspace{1cm}\tau^2_n = (1/\tau^2_0 + n/\sigma^2)^{-1}\\
+\nu_n = \nu_0 + n, \hspace{1cm} \sigma^2_n (\mu) = \frac{1}{\nu_n}[\nu_0 \sigma^2_0 + nS^2_n(\mu)]
+\end{equation}
+where $S^2_n = \frac{1}{n}\sum_i (y_i - \mu)^2$ is unbiased estimator of $\sigma^2$ if $\mu$ were known. 
+
+#### Gibbs sampler in R
+```{r, eval=TRUE}
+mu0 = 1.9; t20 = 0.95^2 ; s20 = 0.01; nu0 = 1
+### Data
+y = c(1.64, 1.7, 1.72, 1.74, 1.82, 1.82, 1.82, 1.9, 2.08)
+mean.y = mean(y); var.y = var(y); n = length(y)
+### Intilization
+S = 1000
+PHI<- matrix(nrow = S, ncol = 2)
+PHI[1,] <- phi <-  c(mean.y, 1/var.y)
+
+### Gibbs sampler
+set.seed(1)
+for (s in 2:S){
+  ## Generating new mean
+  mu.post = (mu0/t20 + n*mean.y*phi[2])/(1/t20 + n*phi[2]); std.post = sqrt(1/(1/t20 + n*phi[2]))
+  phi[1] = rnorm(1, mu.post, std.post)
+  
+  ## Generate new 1/sigma^2
+  nu.post = mu0+n ; s2.post = (nu0*s20 + (n-1)*var.y + n*(mean.y - phi[1])^2) /nu.post
+  phi[2] = rgamma(1, nu.post/2, nu.post* s2.post/2)
+  
+  PHI[s,] <- phi
+}
+plot(PHI[,1], PHI[,2], type= 'l')
+plot(density(PHI[,1], bw=1))
+plot(density(PHI[,2], bw=20))
+```
+
+Note that we use $nS^2_n = (n-1)s^2 + n (\bar{y} - \mu)^2$ for $s^2$ being the unbiased variance of data; $s^2 = \frac{1}{n-1}\sum_i (y_i-\bar{y})^2$.
+
+We also can provide a **discrete approximation** of the posterior distribution, Assume $\theta \in \{\theta_1, \dots, \theta_I\}$ and $1/\sigma^2 = \bar{\sigma}^2 \in \{{\bar{\sigma}}^2_1\dots, {\bar{\sigma}}^2_J\}$, then the discrte approximation of the joint posterior distribution is
+\begin{equation}
+p_D (\theta_k, \bar{\sigma}^2_l|y_1, \dots, y_n) = \frac{p(\theta_k, \bar{\sigma}^2_l, y_1, \dots, y_n)}{\sum_i \sum_j p(\theta_i, \bar{\sigma}^2_j, y_1, \dots, y_n})
+\end{equation}
+and $p(\theta_k|y_1, \dots, y_n) = \sum _j  p_D (\theta_k, \bar{\sigma}^2_l|y_1, \dots, y_n)$. The R code representing this procedure is
+```{r, eval= TRUE}
+### Prior parameters
+mu0 = 1.9; t20 = 0.95^2 ; s20 = 0.01; nu0 = 1
+### Data
+y = c(1.64, 1.7, 1.72, 1.74, 1.82, 1.82, 1.82, 1.9, 2.08)
+
+I <- 100; J <- 100
+mean.grid<- seq(1.505, 2, length = I)
+prec.grid<- seq(1.75, 175, length = J)
+post.grid <- matrix(nrow = I, ncol = J)
+
+for (i in 1:I){
+  for (j in 1:J){
+    post.grid[i,j] <- dnorm(mean.grid[i], mu0, t20)*
+      dgamma(prec.grid[j], nu0/2, nu0*s20/2)*
+      prod(dnorm(y, mean.grid[i], 1/sqrt(prec.grid[j])))
+  }
+}
+
+post.grid <- post.grid/sum(post.grid)
+post.mu <- rowSums(post.grid)
+post.prec <- colSums(post.grid)
+plot(mean.grid, post.mu, type = "l") 
+plot(prec.grid, post.prec, type = "l") 
+```
+
+Note that Gibbs sampler results are very similar to the discrete approximation of the posterior distribution.
+
+Using Gibbs sampler we can approximate the expected value in terms of samples $\{\theta_1,\dots,\theta_S\}$ as follows:
+\begin{equation}
+\frac{1}{S}\sum\limits_{s=1}^S f(\theta_s)\rightarrow \mathbb{E}(f(\theta)).
+\end{equation}
+Since this property we have
+```{r, eval= TRUE}
+1/S * sum(PHI[,1]) ## equals to the right value
+quantile(PHI[,1], probs = c(2.5/100, 0.5, 0.975)) # provides the 95% coverage
+```
+
+
+#### Plotting a mixture model for 1000 MC
+```{r,eval=TRUE}
+library(LaplacesDemon)
+gr <- rcat(10000, c(0.45,0.1,0.45))
+mu.mix <- c(-3,0,3)
+sigma.mix <- c(1/3,1/3,1/3)
+data.mix <- rnorm(10000, mu.mix[gr], sqrt(sigma.mix[gr]))
+hist(data.mix, col = "green", border = "black", xlab = "theta1", ylab = "p(theta1)")
+plot(density(data.mix), col = "red", lwd = 2)
+```
+
+
+#### Plotting a mixture model for 1000 MCMC (Gibbs Sampler)
+Gibbs sampler alternatively samples from the full conditional distributions:
+\begin{equation}
+\theta | \delta \sim \mathcal{N}(\theta; \mu_{\delta}, \sigma^2_{\delta})\\
+p(\delta = k | \theta) =\frac{p(\theta | \delta = k) p(k)}{\sum_k p(\theta | \delta = k) p(k)} 
+\end{equation}
+```{r, eval= TRUE}
+library("LaplacesDemon")
+mu = c(-3,0,3)
+sigma2 = c(1/3,1/3,1/3)
+S = 10000
+prob = c(0.45, 0.1, 0.45)
+k0 = rcat(1, prob)
+theta0 = rnorm(1, mu[k0], sqrt(sigma2[k0]))
+Theta = matrix(nrow = S, ncol = 2)
+Theta[1,]<- theta <- c(theta0,k0)
+set.seed(1)
+## GIBGGS SAMPLER
+for (s in 2:S){
+  theta[1] = rnorm(1, mu[theta[2]], sqrt(sigma2[theta[2]]))
+  post.prob <- vector(mode = "numeric", length = 3)
+  for (k in 1:3){
+    post.prob[k] = dnorm(theta[1], mu[k], sigma2[k]) * prob[k]
+  }
+  post.prob = post.prob/sum(post.prob)
+  theta[2] = rcat(1, post.prob)
+  Theta[s,] <- theta
+}
+plot(Theta[,1])
+hist(Theta[,1])
+plot(density(Theta[,1]))
+```
+
+As can be seen, Gibbs sampler might a poor mixing compared to the MC model. Using **effectiveSize** in coda package provides us with the effective sample size in an MCMC model such that
+$$\text{VAR}_\text{MCMC} = \frac{\text{VAR}_{MC}}{S_{eff}}$$
+where $S_{eff}$ is the number of independent MC samples necessary to achieve the same perception as the MCMC samples. 
+
+## Multivariate Normal
+using packages MASS and mvtnorm we can generate multivariate normal distribution and find the kernel density estimator. Then, we can plot the contour representation of it. 
+
+```{r, eval= FALSE}
+library(mvtnorm)
+x.points <- seq(-5,5,length.out=100), y.points <- x.points
+z <- matrix(0,nrow=100,ncol=100)
+mu <- c(0,0)
+sigma <- matrix(c(2,1,1,4),nrow=2, ncol =2) 
+for (i in 1:100)
+  {
+  for (j in 1:100) {
+        z[i,j] <- dmvnorm(c(x.points[i],y.points[j]), mean=mu,sigma=sigma)
+  }
+  }
+contour(x.points,y.points,z)
+```
+ 
+ Note that **seq(from = 1, to = 1, by = ((to - from)/(length.out - 1)), length.out = NULL, along.with = NULL)**.
+ 
+
+```{r, eval=FALSE}
+library(MASS)
+binorm <- mvrnorm(10000, mu = c(0, 0),
+Sigma = matrix(c(2, 1, 1, 2), 2)) 
+binorm2 <- mvrnorm(10000, mu = c(-1, 1),
+Sigma = matrix(c(1, 1, 1, 1),2))
+## Kernel density estimator 
+binorm.kde <- kde2d(binorm[,1], binorm[,2], n = 50)
+## Mixture 
+bivn.mix <- kde2d(c(binorm[,1],binorm2[,1]), c(binorm[,2],binorm2[,2]), n = 50)
+## To create PDF file 
+pdf(file = "contour.pdf")
+image(bivn.kde); contour(bivn.kde, add = T)
+dev.off()
+```
+
+We now plot the contour for the negative, zero, and positive correlations.
+```{r, eval= TRUE}
+library(MASS)
+library(mvtnorm)
+mu = c(50,50)
+sigma.neg = matrix(c(64, -48, -48, 144), nrow = 2)
+sigma.zero = matrix(c(64, 0, 0, 144), nrow = 2)
+sigma.pos = matrix(c(64, 48, 48, 144), nrow = 2)
+bivno.neg <- rmvnorm(100, mu, sigma.neg)
+bivno.zero <- rmvnorm(100, mu, sigma.zero)
+bivno.pos <- rmvnorm(100, mu, sigma.pos)
+p.neg <- kde2d(bivno.neg[,1], bivno.neg[,2], n = 100)
+p.zero <- kde2d(bivno.zero[,1], bivno.zero[,2], n = 100)
+p.pos <- kde2d(bivno.pos[,1], bivno.pos[,2], n = 100)
+contour(p.neg)
+contour(p.zero)
+contour(p.pos)
+```
+and the true contours can be plotted as follows:
+```{r, eval= TRUE}
+x.points <- seq(20, 80, length.out = 100)
+y.points <- x.points
+mu = c(50,50)
+Sigma.neg = matrix(c(64,-48,-48,144), nrow = 2)
+Sigma.zero = matrix(c(64,0,0,144), nrow = 2)
+Sigma.pos = matrix(c(64,48,48,144), nrow = 2)
+z.neg.points <- matrix(0, nrow = 100, ncol = 100)
+z.zero.points <- matrix(0, nrow = 100, ncol = 100)
+z.pos.points <- matrix(0, nrow = 100, ncol = 100)
+for (i in 1:100){
+  for (j in 1:100){
+    z.neg.points[i,j] = dmvnorm(c(x.points[i], y.points[j]), mean = mu, sigma = Sigma.neg)
+    z.zero.points[i,j] = dmvnorm(c(x.points[i], y.points[j]), mean = mu, sigma = Sigma.zero)
+    z.pos.points[i,j] = dmvnorm(c(x.points[i], y.points[j]), mean = mu, sigma = Sigma.pos)
+  }
+}
+contour(x.points, y.points, z.neg.points) ## It shows negative correlations between $Y_1$ and and $Y_2$ 
+contour(x.points, y.points, z.zero.points) ## It shows no correlations between $Y_1$ and and $Y_2$ 
+contour(x.points, y.points, z.pos.points) ## It shows positive correlations between $Y_1$ and and $Y_2$ 
+```
+
+#### Conjugate prior for multivariate Gaussian 
+Assume that $y_1, \dots, y_n \sim \mathcal{MN}(\mu, \Sigma)$ in $\mathbb{R}^p$. The likelihood function given parameters is given by
+\begin{equation} p(y_1, \dots, y_n| \mu, \Sigma) \propto \exp(-\frac{1}{2}\mu^T A_1 \mu + \mu^T b_1),\end{equation} where $A_1 = n\Sigma^{-1}$ and $b_1 = n\Sigma^{-1}\bar{y}$ for $\bar{y} = (\frac{1}{n}\sum_i y_{i,1}, \dots, \frac{1}{n}\sum_i y_{i,p})$.
+
+Bayeisan approach suggests to place a prior $\mu|\Sigma \sim \mathcal{MN}(\mu_0, \Sigma_0)$ on $\mu$. The prior distribution can be written as
+\begin{equation}
+p(\mu) \propto \exp(-\frac{1}{2}\mu^T A_0 \mu + \mu^Tb_0), \hspace{1cm} \text{for } A_0 = \Sigma^{-1}_0,  b_0 = \Sigma^{-1}_0 \mu_0\\ 
+\end{equation}
+This equation implies if a random variable has the form of $\exp(-\frac{1}{2}\mu^T A \mu + \mu^Tb)$, then the random variable must be multivariate with mean $A^{-1}b$ and covariance matrix $A^{-1}$. Given the likelihood and prior, the posteriro distribution is 
+$$p(\mu | \Sigma, y_1, \dots, y_n) \propto \exp(-\frac{1}{2}\mu^T A_n\mu + \mu^T b_n)$$ where $A_n = A_0 + A_1 = \Sigma^{-1}_0 + n\Sigma^{-1}$ and $b_n = b_0 + b_1 = \Sigma^{-1}_0\mu_0 + n\Sigma^{-1}\bar{y}$. Thus,
+\begin{equation}
+\mu | \Sigma, y_1, \dots, y_n \sim \mathcal{MN}(\mu; A^{-1}_n,A^{-1}_n b_n)
+\end{equation}
+### Inverse-Wishart Distribution
+\begin{equation}
+\Sigma \sim IW(\nu_0, S_0) \implies p(\Sigma) \propto |\Sigma|^{-(\nu_0+p+1)/2} \times \exp(-tr(S_0 \Sigma^{-1})/2)
+\end{equation}
+Given the fact that $\sum_k b^T_k A b_k = tr(B^TBA)$, we have
+\begin{equation}
+p(\Sigma | y_1, \dots, y_n, \mu) \propto |\Sigma|^{-(\nu_0+p+n+1)/2}\exp(-tr([S_0+S_\mu] \Sigma^{-1})/2)
+\end{equation}
+where $S_\mu = \sum\limits_{i=1}^n (y_i-\mu)(y_i-\mu)^T$. Note that $1/nS_\mu$ provides unbiased estimator fro Cov(Y). Together, we have,
+\begin{equation}
+\Sigma | y_1, \dots, y_n, \mu \sim IW(\nu_0+n,[S_0+S_\mu]^{-1})
+\end{equation}
+
+Note that if $\Sigma\sim IW(\nu_0,S^{-1}_0)$, then $\mathbb{E}[\Sigma] = \frac{1}{\nu_0-p-1} S_0$ and $\mathbb{E}[\Sigma^{-1}] = \nu_0S^{-1}_0$.
+
+**To summarize:**
+\begin{equation}
+\mu|y_1,\dots, y_n, \Sigma \sim \mathcal{N}(\mu_n, \Sigma_n)\\
+\Sigma | y_1,\dots, y_n, \mu \sim IW(\nu_n, S^{-1}_n)
+\end{equation}
+where 
+\begin{equation}
+\mu_n = (\Sigma^{-1}_0 + n \Sigma^{-1}_n)^{-1}(\Sigma^{-1}_0\mu_0 + n \Sigma^{-1}_n \bar{y})\\
+\Sigma_n = (\Sigma^{-1}_0 + n \Sigma^{-1}_n)^{-1}\\
+\nu_n = \nu_0 + n\\
+S_n = S_0 + S_\mu \hspace{0.5cm}\text{where}\hspace{0.5cm} S_\mu = \sum_i (y_i - \mu)(y_i - \mu)^T
+\end{equation}
+#### Gibbs sampling for multivariate normal:
+Given starting points $\Sigma_0$, the Gibbs sampler to sample from the joing distribution is as follows:
+
+1. Sample $\theta_{i+1}$ from the full conditional distribution meaning
+  * Compute the $\mu_n$ and $\Sigma_n$ from the data and given previous covariance matrix
+  * Sample $\theta_{i+1}$ from a multivariate normal with parameters $(\mu_n, \Sigma_n)$
+2. Sample $Sigma_{i+1}$ from its full conditional distribution meaning 
+  * Compute $\nu_n$ and $S_n$ and given $\theta_{i+1}$
+  * Sample $\Sigma_{i+1}$ from an inverse-wishart with parameters $(\nu_n, S^{-1}_n)$
+  
+**Notation in R** 
+
+* A*B --> elementwise multiplications
+* A%*%B --> Matrix multiplications
+* t(A) --> Transpose
+* diag(A) --> Diagonal
+* solve(A,b) --> x: Ax = b
+* solve(A) --> Inverse of A where A is a square matrix
+* ginv(A) --> Moore-Penrose Generalized Inverse of A. ginv(A) requires loading the MASS package
+* y<-eigen(A) --> y\$val are the eigenvalues of A and y\$vec are the eigenvectors of A
+* y<-svd(A) --> Single value decomposition of A, and y\$d = vector containing the singular values of A, and y\$u = matrix with columns contain the left singular vectors of A, and y\$v = matrix with columns contain the right singular vectors of A
+* cbind(A,B,...) --> Combine matrices(vectors) horizontally. Returns a matrix
+* rbind(A,B,...) --> Combine matrices(vectors) vertically. Returns a matrix
+* rowMeans(A) --> Returns vector of row means
+* colMeans(A) --> Returns vector of column means
+* rowSums(A) --> Returns vector of row sums
+* colSums(A) --> Returns vector of column sums
+```{r, eval=FALSE}
+library(mvtnorm)
+library(hdrcde)
+data.exam <- dget("www2.stat.duke.edu/~pdh10/FCBC/Inline/Y.reading")
+## Compute the mean and variance of the data
+mean.data <- apply(data.exam, 2, mean)
+cov.data <- cov(data.exam)
+n <- dim(data.exam)[1]
+THETA <- SIGMA <- NULL
+## Prior parameters
+mu0 <- c(50,50)
+cov0 <- matrix(c(625, 312.5,312.5,625), nrow =2)
+nu0 <- 4
+S0 <- matrix(c(625, 312.5,312.5,625), nrow =2)
+## Gibbs Sampler
+set.seed(1)
+for(i in 1:1000){
+  # Update mean
+  Sigman <- solve(solve(cov0) + n* solve(cov.data))
+  mun <- Sigman %*%(solve(cov0)%*%mu0 + n* solve(cov.data)%*% mean.data)
+  mu <- rmvnorm(1, mun, Sigman)
+  # Update variance
+  nun <- nu0 + n
+  Sn <- S0 + t(data.exam - c(mu))%*%(data.exam - c(mu)) ## Note that S_n depends on mu_{i+1}
+  Sigma <- solve(rwishart(nun, Sn))
+  SIGMA <- rbind(SIGMA, Sigma)
+  THETA <- rbind(THETA, mu)
+    }
+quantile(THETA[,2]-THETA[,1], prob = c(0.025, 0.975)) # Confidence region 
+mean(THETA[,2]>THETA[,1]) # Inference
+plot(data.exam)
+plot(THETA[,1], THETA[,1], type = 'l', col="blue")
+```
+
+In this example $Pr(\theta_2>\theta_1 | y_1, \dots, y_n) = 0.99$ suggest that there is an improvement in before and after. However, for a randomly selected student (it depends on the predictive distribution), $Pr(Y_2>Y_1 | y_1, \dots, y_n) = 0.71$ suggests that almost third of students will get a lower score on the second exam. The former measures $\theta_2-\theta1$ regardless if the absolute value is large compared to the sampling variablity of data. 
+### Conditional Normal
+if $a \subset \{1,\dots, p\}$ and $b = a^c$, then
+\begin{equation}
+y_{[b]|}y_{[a]}, \mu, \Sigma \sim \mathcal{MN}(\mu_{b|a}, \Sigma_{b|a}), \text{where}\\
+\mu_{b|a} = \mu_{[b]} + \Sigma_{[b,a]}\Sigma^{-1}_{[a,a]}(y_{[a]}-\mu_{[a]})\\
+\Sigma_{b|a} = \Sigma_{[b,b]} - \Sigma_{[b,a]}\Sigma^{-1}_{[a,a]}\Sigma_{[a,b]}
+\end{equation}
+where $\mu_{[b]}$ are elements of $\mu$ corresponsing to $b$ and $\Sigma_{[a,b]}$ are the matrix consist of elements that are in rows $a$ and column $b$ of $\Sigma$.
+
+### Gibbs Sampler for Missing Data
+Assume that design matrix $Y_{n\times d}$ and the corresponding binary matrix $O_{n\times d}$ where $O_{i,j} = 1$ if the data point $Y_{i,j}$ are observed and zero otherwise. Define
+
+* $Y_{obs} = \{y_{i,j}: O_{i,j}=1\}$ : Observed data
+* $Y_{mis} = \{y_{i,j}: O_{i,j}=0\}$ : Missing data
+
+The goal is to find the posterior distribution $p(\mu,\Sigma, Y_{mis}|Y_{obs})$ through Gibbs sampling:
+
+* Inialize $\Sigma^{(0)}, Y^{(0)}_{mis}$
+* **Goal** to generate $\{\mu^{(s+1)}, \Sigma^{(s+1)}, Y^{(s+1)}_{mis}\}$ from $\{\mu^{(s)}, \Sigma^{(s)}, Y^{(s)}_{mis}\}$
+* **Gibbs Sampler**
+   a. Sample $\mu^{(s+1)}\sim p(\mu|Y_{obs}, Y^{(s)}_{mis},\Sigma^{(s)})$
+   b. Sample $\Sigma^{(s+1)}\sim p(\Sigma|Y_{obs}, Y^{(s)}_{mis},\mu^{(s+1)})$
+   c. Sample $Y^{(s+1)}_{mis}\sim p(Y_{mis}|Y_{obs}, \mu^{(s+1)},\Sigma^{(s+1)})$
+ 
+ Note that $Y_s = (Y_{obs}, Y^{(s)}_{mis})$ is full data so we can use the formulas provided earlier. However for (c), we use
+ 
+\begin{equation}
+p(Y_{mis}|Y_{obs}, \mu,\Sigma) \propto \prod\limits_{i=1}^n p(y_{i, mis}|y_{i, obs}, \mu, \Sigma)
+\end{equation}
+```{r, eval = FALSE}
+library(MASS)
+data1 <- dget("http://www.stat.washington.edu/~hoff/Book/Data/data/Y.pima.miss")
+n = dim(data1)[1]
+d = dim(data1)[2]
+mu0 = c(120, 64, 25, 30)
+mean.data1 = colMeans(data1, na.rm = TRUE)
+# Complete the code
+```
+ 
+### Hierarchical Modeling 
+In this section, we consider a normal modeling meaning:
+\begin{equation}
+y_j \sim \mathcal{N}(\theta_j, \sigma^2)\\
+\theta_j|\mu, \tau^2 \sim \mathcal{N}(\mu, \tau^2)
+\end{equation}
+Since we work with Bayesian framework, we need a prior on the unknown parameters $\sigma^2, \mu, \tau^2$. We use the semi-comjugate prior
+\begin{equation}
+\mu \sim \mathcal{N}(\mu_0, \gamma^2_0)\\
+1/\tau^2 \sim \text{Gamma}(\eta_0/2,\eta_0\tau^2_0/2)\\
+1/\sigma^2 \sim \text{Gamma}(\nu_0/2,\nu_0\sigma^2_0/2).
+\end{equation}
+we are after the posterior distribution
+\begin{equation}
+p(\theta_1, \dots, \theta_m, \mu, \tau, \sigma^2|y_1,\dots, y_n) \propto p(\mu, \tau, \sigma^2)p(\theta_1, \dots, \theta_m|\mu, \tau, \sigma^2) p(y_1,\dots, y_n|\mu, \tau, \sigma^2, \theta_1, \dots, \theta_m)
+\end{equation}
+Based on the hierarchical modeling we can simplify this equation as follows:
+\begin{equation}
+p(\theta_1, \dots, \theta_m, \mu, \tau, \sigma^2|y_1,\dots, y_n) \propto p(\mu)p(\tau)p(\sigma^2)\prod\limits_{j=1}^mp(\theta_j|\mu,\tau^2)\prod\limits_{i=1}^m\prod\limits_{j=1}^{n_j} p(y_{i,j}|\theta_j, \sigma^2).
+\end{equation}
+Now, we need to find the full conditionla distribution in order to use Gibbs sampler:
+\begin{equation}
+\mu|\theta_1,\dots\theta_m, \mu_0, \gamma^2_0 \sim \mathcal{N}(\frac{\frac{\mu_0}{\gamma^2_0}+\frac{m\bar{\theta}}{{\tau^2}}}{\frac{1}{\gamma^2_0}+ \frac{m}{\tau^2}},[\frac{1}{\gamma^2_0}+ \frac{m}{\tau^2}]^{-1})
+\end{equation}
+and 
+\begin{equation}
+1/\tau^2 | \theta_1, \dots, \theta_m, \eta_0, \tau^2_0, \mu \sim \text{Gamma}(\frac{\eta+m}{2}, \frac{\eta_0\tau^2_0 + \sum (\theta_j - \mu)^2}{2})
+\end{equation}
+To find the full conditional distribution for each $\theta_j$, note that
+\begin{equation}
+p(\theta_j| \mu, \tau, \sigma^2, y_1,\dots, y_n)\propto p(\theta_j|\mu,\tau^2)\prod\limits_{j=1}^{n_j} p(y_{i,j}|\theta_j, \sigma^2)
+\end{equation}
+One can think of this as the posterior distribution over $\theta_j$ when $p(\theta_j|\mu,\tau^2)$ is the prior and $\prod\limits_{j=1}^{n_j} p(y_{i,j}|\theta_j, \sigma^2)$ is the likelihood. Both prior and the likelihood are normal, then
+\begin{equation}
+\theta_j| \mu, \tau, \sigma^2, y_1,\dots, y_n \sim \mathcal{N}(\frac{\mu/\tau^2 + n_j\bar{y_j}/\sigma^2}{1/\tau^2 +n_j/\sigma^2},(1/\tau^2 +n_j/\sigma^2)^{-1}).
+\end{equation}
+Find the full conditional distribution of $\sigma^2$
+\begin{equation}
+\sigma^2|y_1,\dots, y_n, \theta_1, \dots, \theta_m  \propto p(\sigma^2) \prod\limits_{i=1}^m\prod\limits_{j=1}^{n_j} p(y_{i,j}|\theta_j, \sigma^2)
+\end{equation}
+Plug in the corresponding distributions we get, 
+\begin{equation}
+\sigma^2|y_1,\dots, y_n, \theta_1, \dots, \theta_m \sim \text{Gamma}(\frac{1}{2}[\nu_0 + \sum\limits_{j=1}^m n_j], \frac{1}{2}[\nu_0\sigma^2_0 + \sum\limits_{j=1}^m\sum\limits_{i=1}^{n_j}(y_{i,j}-\theta_j)^2])
+\end{equation}
+```{r, eval = FALSE}
+## Hierarchical Modeling 
+data.score<-dget("http://www.stat.washington.edu/~hoff/Book/Data/data/Y.school.mathscore")
+plot(data.score)
+ave = vector(mode = "numeric", length = 100)
+for(j in 1:100){
+  ave[j] = mean(data.score[data.score[,1]==j, 2]) # computes the average for each school
+}
+hist(ave) 
+Y <- data.score
+## Parameters for Prior
+nu0 = 1; s20 = 100
+eta0 = 1; t20 = 100
+mu0 = 50; g20 = 25
+
+##Initialization 
+m = length(unique(Y[,1]))
+n<-sv<-ybar<-rep(NA,m)
+for(j in 1:100){
+  ybar[j] = mean(Y[Y[,1]==j, 2]) # computes the average for each school
+  sv[j] = var(Y[Y[,1]==j, 2])
+  n[j] = sum(Y[,1]==j)
+}
+### y_i drawn from N(\theta_i, \sigma^2)
+### \theta_i drawn from N(\mu, tau^2)
+### \mu drawn from N(\mu_0, \gamma^2_0)
+### tau^2 drawn from IG(\eta_0/2,\eta_0\tau^2_0/2)
+### \sigma^2 drawn from IG(\nu_0/2, nu_0\sigma^2_0/2)
+
+theta = ybar ## \theta is the mean of the data
+sigma2 = mean(sv) ## \sigma^2 is the variance of the data
+mu = mean(ybar)  ## \mu is the mean of \theta
+tau2 = var(theta) ## tau^2 is the varaince of \theta in the hierarchical model 
+
+#### MCMC Model
+set.seed(1)
+iter = 10000
+THETA = matrix(nrow = iter, ncol = m) ## to store \theta_j j = 1, ... 100
+SMT = matrix(nrow = iter, ncol = 3) ## To store \sigma^2, \mu, and \tau
+## Algorithm
+for(i in 1:iter){
+  ## Sample new values for \theta
+  for(j in 1:m){
+    var.theta = 1/(n[j]/sigma2 + 1/tau2)
+    mean.theta = var.theta*(ybar[j]*n[j]/sigma2+mu/tau2)
+    theta[j] = rnorm(1, mean.theta, sqrt(var.theta))
+  }
+  ### Sample from sigma2
+  nun = nu0+sum(n)
+  ss = nu0*s20
+  for(j in 1:m){
+    ss = ss+sum((Y[Y[,1]==j,2] - theta[j])^2)
+  }
+  sigma2 = 1/rgamma(1, nun/2, ss/2)
+  
+  ### Updating \mu
+  var.mu = 1/(m/tau2+1/g20)
+  mean.mu = var.mu*(m*mean(theta)/tau2 + mu0/g20)
+  mu = rnorm(1, mean.mu, sqrt(var.mu))
+  
+  ### Sampling \tau2
+  etam = eta0+m
+  ss = eta0*t20 + sum((theta-mu)^2)
+  tau2 = 1/rgamma(1,etam/2, ss/2)
+  
+  ### Storing resulta
+  
+  THETA[i,] = theta
+  SMT[i,] = c(sigma2, mu, tau2)
+  
+}
+
+```
+
+### References 
+
+1. A first course in Bayesian Statistics, Peter Hoff, Springer, 2010
+2. Pattern recognition and machine learning, Christopher Bishop, Springer-Verlag, 2006
+
+
+
+
+
+
+
+
+
